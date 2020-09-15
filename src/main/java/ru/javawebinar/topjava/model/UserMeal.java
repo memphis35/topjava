@@ -26,4 +26,8 @@ public class UserMeal {
     public int getCalories() {
         return calories;
     }
+
+    public UserMealWithExcess getUserMealWithExcess(boolean excess) {
+        return new UserMealWithExcess(dateTime, description, calories, excess);
+    }
 }
