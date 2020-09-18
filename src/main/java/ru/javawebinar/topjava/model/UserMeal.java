@@ -1,5 +1,7 @@
 package ru.javawebinar.topjava.model;
 
+import ru.javawebinar.topjava.util.MealBooleanWrapper;
+
 import java.time.LocalDateTime;
 
 public class UserMeal {
@@ -27,7 +29,7 @@ public class UserMeal {
         return calories;
     }
 
-    public UserMealWithExcess getUserMealWithExcess(boolean excess) {
+    public UserMealWithExcess getUserMealWithExcess(MealBooleanWrapper excess) {
         return new UserMealWithExcess(dateTime, description, calories, excess);
     }
 }

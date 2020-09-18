@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.function.*;
+import java.util.stream.Collector;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -30,38 +31,85 @@ public class UserMealsUtil {
 
     public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
         List<UserMealWithExcess> result = new ArrayList<>();
-        Map<LocalDate, Integer> checkerMap = new HashMap<>();
+        Map<LocalDate, MealSummaryPerDay> checkerMap = new HashMap<>();
         for (UserMeal currentMeal : meals) {
             LocalDate currentDate = currentMeal.getDateTime().toLocalDate();
-            if (!checkerMap.containsKey(currentMeal.getDateTime().toLocalDate())) {
-                checkerMap.put(currentDate, currentMeal.getCalories());
-            } else {
-                checkerMap.replace(currentDate, checkerMap.get(currentDate) + currentMeal.getCalories());
+            LocalTime currentTime = currentMeal.getDateTime().toLocalTime();
+            if (!checkerMap.containsKey(currentDate)) {
+                MealSummaryPerDay newMeal = new MealSummaryPerDay();
+                checkerMap.put(currentDate, newMeal);
             }
-        }
-        for (UserMeal currentMeal : meals) {
-            if (TimeUtil.isBetweenHalfOpen(currentMeal.getDateTime().toLocalTime(), startTime, endTime)) {
-                result.add(currentMeal.getUserMealWithExcess(checkerMap.get(currentMeal.getDateTime().toLocalDate()) > caloriesPerDay));
+            MealBooleanWrapper tempBoolean = checkerMap.get(currentDate).getExceed();
+            if (TimeUtil.isBetweenHalfOpen(currentTime, startTime, endTime)) {
+                result.add(currentMeal.getUserMealWithExcess(tempBoolean));
             }
+            checkerMap.get(currentDate).addCalories(currentMeal.getCalories(), caloriesPerDay);
         }
         return result;
     }
 
     public static List<UserMealWithExcess> filteredByStreams(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
         Map<LocalDate, Integer> checkerMap = new HashMap<>();
-        List<UserMealWithExcess> result = new ArrayList<>();
-        meals.stream()
-                .peek(meal -> {
+        return meals.stream().collect(new Collector<UserMeal, List<UserMeal>, List<UserMealWithExcess>>() {
+
+            @Override
+            public Supplier<List<UserMeal>> supplier() {
+                return ArrayList::new;
+            }
+
+            @Override
+            public BiConsumer<List<UserMeal>, UserMeal> accumulator() {
+                return (list, meal) -> {
                     LocalDate currentDate = meal.getDateTime().toLocalDate();
-                    if (!checkerMap.containsKey(meal.getDateTime().toLocalDate())) {
+                    if (!checkerMap.containsKey(currentDate)) {
                         checkerMap.put(currentDate, meal.getCalories());
                     } else {
-                        checkerMap.replace(currentDate, checkerMap.get(currentDate) + meal.getCalories());
+                        checkerMap.merge(currentDate, meal.getCalories(), Integer::sum);
                     }
-                })
-                .filter(meal -> TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime))
-                .collect(Collectors.toList())
-                .forEach(meal -> result.add(meal.getUserMealWithExcess(checkerMap.get(meal.getDateTime().toLocalDate()) > caloriesPerDay)));
-        return result;
+                    if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
+                        list.add(meal);
+                    }
+                };
+            }
+
+            @Override
+            public BinaryOperator<List<UserMeal>> combiner() {
+                return (x, y) -> new ArrayList<>();
+            }
+
+            @Override
+            public Function<List<UserMeal>, List<UserMealWithExcess>> finisher() {
+                return userMeals -> {
+                    List<UserMealWithExcess> result = new ArrayList<>();
+                    for (UserMeal meal : userMeals) {
+                        if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
+                            result.add(meal.getUserMealWithExcess(
+                                    new MealBooleanWrapper(checkerMap.get(meal.getDateTime().toLocalDate()) > caloriesPerDay)));
+                        }
+                    }
+                    return result;
+                };
+            }
+
+            @Override
+            public Set<Characteristics> characteristics() {
+                return new HashSet<>();
+            }
+        });
     }
+
+    private static class MealSummaryPerDay {
+        private final MealBooleanWrapper exceed = new MealBooleanWrapper(false);
+        private int totalCalories = 0;
+
+        private void addCalories(int calories, int limit) {
+            totalCalories += calories;
+            if (!exceed.isExceed() && totalCalories > limit) exceed.setExceed(true);
+        }
+
+        public MealBooleanWrapper getExceed() {
+            return exceed;
+        }
+    }
+
 }
