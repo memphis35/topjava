@@ -6,6 +6,7 @@ import ru.javawebinar.topjava.model.UserMealWithExcess;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -15,9 +16,14 @@ import java.util.stream.Collector;
 
 public class MealCollectorOptional implements Collector<UserMeal, List<UserMealWithExcess>, List<UserMealWithExcess>> {
 
-    private final Map<LocalDate, CaloriesTotalPerDay> excessCheckingMap = new HashMap<>();
+    private final Map<LocalDate, Integer> caloriesCounterMap = new ConcurrentHashMap<>();
+
+    private final Map<LocalDate, AtomicBoolean> excessCheckingMap = new ConcurrentHashMap<>();
+
     private final LocalTime startTime;
+
     private final LocalTime endTime;
+
     private final int caloriesLimit;
 
     public MealCollectorOptional (LocalTime start, LocalTime end, int limit) {
@@ -25,6 +31,7 @@ public class MealCollectorOptional implements Collector<UserMeal, List<UserMealW
         endTime = end;
         caloriesLimit = limit;
     }
+
     @Override
     public Supplier<List<UserMealWithExcess>> supplier() {
         return ArrayList::new;
@@ -33,29 +40,26 @@ public class MealCollectorOptional implements Collector<UserMeal, List<UserMealW
     @Override
     public BiConsumer<List<UserMealWithExcess>, UserMeal> accumulator() {
         return (list, meal) -> {
-            excessCheckingMap.merge(
-                    meal.getDate(),
-                    new CaloriesTotalPerDay(meal, caloriesLimit),
-                    (calories1, calories2) -> {
-                        calories1.addCalories(meal.getCalories(), caloriesLimit);
-                        return calories1;
-                    }
-            );
-            AtomicBoolean isExceed = excessCheckingMap.get(meal.getDate()).getIsExceed();
+            caloriesCounterMap.merge(meal.getDate(), meal.getCalories(), Integer::sum);
+            AtomicBoolean isExceed = new AtomicBoolean(caloriesCounterMap.get(meal.getDate()) > caloriesLimit);
+            excessCheckingMap.computeIfAbsent(meal.getDate(), date -> isExceed).set(isExceed.get());
             if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
-                list.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), isExceed));
+                list.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), excessCheckingMap.get(meal.getDate())));
             }
         };
     }
 
     @Override
     public BinaryOperator<List<UserMealWithExcess>> combiner() {
-        return (x, y) -> x;
+        return (list, list2) -> {
+            list.addAll(list2);
+            return list;
+        };
     }
 
     @Override
     public Function<List<UserMealWithExcess>, List<UserMealWithExcess>> finisher() {
-        return (resultList) -> resultList;
+        return list -> list;
     }
 
     @Override
