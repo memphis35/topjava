@@ -50,7 +50,7 @@ public class UserMealsUtil {
         return meals.stream()
                 .filter(meal -> TimeUtil.isBetweenHalfOpen(meal.getTime(), startTime, endTime))
                 .map(meal -> toUserMealWithExcess(meal, excessCheckingMap.get(meal.getDate()) > caloriesPerDay))
-                .collect(ArrayList::new, ArrayList::add, (list1, list2) -> list2.addAll(list1));
+                .collect(Collectors.toList());
     }
 
     public static List<UserMealWithExcess> filteredByCyclesOptional2(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
@@ -59,10 +59,10 @@ public class UserMealsUtil {
         List<UserMealWithExcess> result = new ArrayList<>();
         for (UserMeal meal : meals) {
             caloriesCounterMap.merge(meal.getDate(), meal.getCalories(), Integer::sum);
-            AtomicBoolean isExceed = new AtomicBoolean(caloriesCounterMap.get(meal.getDate()) > caloriesPerDay);
-            excessCheckingMap.computeIfAbsent(meal.getDate(), date -> isExceed).set(isExceed.get());
+            AtomicBoolean isExceed = excessCheckingMap.computeIfAbsent(meal.getDate(), date -> new AtomicBoolean());
+            isExceed.set(caloriesCounterMap.get(meal.getDate()) > caloriesPerDay);
             if (TimeUtil.isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
-                result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), excessCheckingMap.get(meal.getDate())));
+                result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), isExceed));
             }
         }
         return result;
