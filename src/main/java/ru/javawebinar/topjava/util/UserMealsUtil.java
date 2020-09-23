@@ -58,9 +58,9 @@ public class UserMealsUtil {
         Map<LocalDate, AtomicBoolean> excessCheckingMap = new HashMap<>();
         List<UserMealWithExcess> result = new ArrayList<>();
         for (UserMeal meal : meals) {
-            caloriesCounterMap.merge(meal.getDate(), meal.getCalories(), Integer::sum);
+            Integer currentCalories = caloriesCounterMap.merge(meal.getDate(), meal.getCalories(), Integer::sum);
             AtomicBoolean isExceed = excessCheckingMap.computeIfAbsent(meal.getDate(), date -> new AtomicBoolean());
-            isExceed.set(caloriesCounterMap.get(meal.getDate()) > caloriesPerDay);
+            isExceed.set(currentCalories > caloriesPerDay);
             if (TimeUtil.isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
                 result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), isExceed));
             }

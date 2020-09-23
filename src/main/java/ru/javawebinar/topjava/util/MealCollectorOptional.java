@@ -42,7 +42,9 @@ public class MealCollectorOptional implements Collector<UserMeal, List<UserMealW
         return (list, meal) -> {
             caloriesCounterMap.merge(meal.getDate(), meal.getCalories(), Integer::sum);
             AtomicBoolean isExceed = excessCheckingMap.computeIfAbsent(meal.getDate(), date -> new AtomicBoolean());
-            isExceed.set(caloriesCounterMap.get(meal.getDate()) > caloriesLimit);
+            if (!isExceed.get()) {
+                isExceed.set(caloriesCounterMap.get(meal.getDate()) > caloriesLimit);
+            }
             if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
                 list.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), isExceed));
             }
