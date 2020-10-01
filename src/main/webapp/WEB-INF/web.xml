@@ -16,4 +16,13 @@
         <url-pattern>/users</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>mealTable</servlet-name>
+        <servlet-class>ru.javawebinar.topjava.web.MealServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>mealTable</servlet-name>
+        <url-pattern>/mealApp</url-pattern>
+    </servlet-mapping>
+
 </web-app>

@@ -1,0 +1,16 @@
+.meal-table {
+    width: 50%;
+    margin: 10px auto;
+}
+
+td {
+    padding: 10px;
+}
+
+.exceed {
+    background-color: lightpink;
+}
+
+.not-exceed {
+    background-color: lightgreen;
+}
