@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page import="ru.javawebinar.topjava.model.MealTo" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <html>
 <head>
@@ -10,6 +9,7 @@
 </head>
 <body>
 <main>
+    <a class="navigate" href="mealApp?action=create">Add new meal</a>
     <section class="meal-table">
         <table class="meal-summary">
             <tr class="header">
@@ -30,8 +30,8 @@
                 <td>${meal.getDateTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy hh:mm"))}</td>
                 <td>${meal.getDescription()}</td>
                 <td>${meal.getCalories()}</td>
-                <td>UPDATE</td>
-                <td>DELETE</td>
+                <td><a href="mealApp?action=update&datetime=${meal.getDateTime()}">UPDATE</a></td>
+                <td><a href="mealApp?action=delete&datetime=${meal.getDateTime()}">DELETE</a></td>
                 </tr>
             </c:forEach>
         </table>

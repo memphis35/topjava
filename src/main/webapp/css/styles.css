@@ -1,10 +1,18 @@
-.meal-table {
+a.navigate {
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
+    text-decoration: none;
+    text-align: center;
+}
+
+.meal-summary {
     width: 50%;
     margin: 10px auto;
 }
 
 td {
-    padding: 10px;
+    padding: 5px;
 }
 
 .exceed {
@@ -13,4 +21,21 @@ td {
 
 .not-exceed {
     background-color: lightgreen;
+}
+
+/* create and update jsp */
+
+label {
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+
+input, textarea {
+    display: block;
+    width: 200px;
+    margin: 10px auto;
+    resize: none;
+    padding: 5px;
 }
