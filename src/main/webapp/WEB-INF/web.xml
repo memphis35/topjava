@@ -22,7 +22,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>mealTable</servlet-name>
-        <url-pattern>/mealApp</url-pattern>
+        <url-pattern>/meals</url-pattern>
     </servlet-mapping>
 
 </web-app>

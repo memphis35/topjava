@@ -6,6 +6,8 @@ import java.time.LocalTime;
 import java.util.Objects;
 
 public class Meal {
+    private long id;
+
     private final LocalDateTime dateTime;
 
     private final String description;
@@ -38,16 +40,24 @@ public class Meal {
         return dateTime.toLocalTime();
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Meal)) return false;
         Meal meal = (Meal) o;
-        return dateTime.equals(meal.dateTime);
+        return this.id == meal.getId();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dateTime);
+        return Objects.hash(id);
     }
 }
