@@ -9,7 +9,7 @@ public interface MealStorage {
 
     Meal update(Meal meal);
 
-    void remove(long index);
+    void remove(long id);
 
     Meal get(long id);
 

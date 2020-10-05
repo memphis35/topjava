@@ -8,10 +8,10 @@
 </head>
 <body>
 <main>
-    <a class="navigate" href="meals?action=list">Return to list</a>
+    <a class="navigate" href="meals">Return to list</a>
     <section>
         <jsp:useBean id="meal" type="ru.javawebinar.topjava.model.Meal" scope="request"/>
-        <form action="meals?action=update" method="POST">
+        <form action="meals" method="POST">
             <label>Date: <input name="datetime" type="datetime-local" value="${meal.dateTime}" required></label>
             <label>Description: <textarea name="description" rows="3" required>${meal.description}</textarea></label>
             <label>Calories: <input name="calories" type="number" value="${meal.calories}" required></label>

@@ -2,20 +2,19 @@ package ru.javawebinar.topjava.web;
 
 import org.slf4j.Logger;
 import ru.javawebinar.topjava.model.Meal;
-import ru.javawebinar.topjava.model.MealTo;
 import ru.javawebinar.topjava.storage.MapMealStorage;
 import ru.javawebinar.topjava.storage.MealStorage;
+import ru.javawebinar.topjava.util.MealsUtil;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.time.LocalTime;
+import java.time.Month;
+import java.time.temporal.ChronoUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -27,53 +26,52 @@ public class MealServlet extends HttpServlet {
     private final int caloriesLimit = 2000;
 
     @Override
+    public void init() throws ServletException {
+        storage.create(new Meal(LocalDateTime.of(2020, Month.JANUARY, 30, 10, 0), "Завтрак", 500));
+        storage.create(new Meal(LocalDateTime.of(2020, Month.JANUARY, 30, 13, 0), "Обед", 1000));
+        storage.create(new Meal(LocalDateTime.of(2020, Month.JANUARY, 30, 20, 0), "Ужин", 500));
+        storage.create(new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 0, 0), "Еда на граничное значение", 100));
+        storage.create(new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 10, 0), "Завтрак", 1000));
+        storage.create(new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 13, 0), "Обед", 500));
+        storage.create(new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 20, 0), "Ужин", 410));
+    }
+
+    @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action") != null ? req.getParameter("action") : "list";
-        long index = req.getParameter("id") != null ? Long.parseLong(req.getParameter("id")) : -1;
+        String action = req.getParameter("action") != null ? req.getParameter("action") : "defalut";
+        long id = req.getParameter("id") != null ? Long.parseLong(req.getParameter("id")) : -1;
         switch (action) {
             case "create":
             case "update":
-                req.setAttribute("meal", storage.get(index));
+                req.setAttribute("meal", action.equals("create") ?
+                        new Meal(id, LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), null, 0) : storage.get(id));
                 log.debug("forward to update.jsp");
                 req.getRequestDispatcher("/jsp/update.jsp").forward(req, resp);
                 break;
             case "delete":
-                storage.remove(index);
+                storage.remove(id);
+                resp.sendRedirect("meals");
                 break;
             default:
-                log.debug("Illegal action argument");
+                req.setAttribute("mealResultList", MealsUtil.filteredByStreams(storage.getAll(), LocalTime.MIN, LocalTime.MAX, caloriesLimit));
+                log.debug("forward to meals.jsp");
+                getServletContext().getRequestDispatcher("/jsp/meals.jsp").forward(req, resp);
                 break;
         }
-        req.setAttribute("mealResultList", getListMealTo());
-        log.debug("forward to meals.jsp");
-        getServletContext().getRequestDispatcher("/jsp/meals.jsp").forward(req, resp);
-    }
-
-    private List<MealTo> getListMealTo() {
-        Map<LocalDate, Integer> caloriesSummaryPerDay =
-                storage.getAll().stream()
-                        .collect(Collectors.toMap(Meal::getDate, Meal::getCalories, Integer::sum));
-        log.debug("Getting mealTO collection");
-        return storage.getAll().stream()
-                .map(meal -> new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
-                        caloriesSummaryPerDay.get(meal.getDate()) > caloriesLimit, meal.getId()))
-                .collect(Collectors.toList());
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        String action = req.getParameter("action");
         long id = Long.parseLong(req.getParameter("id"));
         Meal current = createMeal(req);
-        if ("update".equals(action)) {
-            if (id >= 0) {
-                current.setId(id);
-                storage.update(current);
-            } else {
-                storage.create(current);
-            }
+        log.debug("Meal successfully created");
+        if (id >= 0) {
+            current.setId(id);
+            storage.update(current);
+        } else {
+            storage.create(current);
         }
         log.debug("Redirect to MealServlet.class");
         resp.sendRedirect("meals");
@@ -83,8 +81,6 @@ public class MealServlet extends HttpServlet {
         LocalDateTime datetime = LocalDateTime.parse(request.getParameter("datetime"));
         String description = request.getParameter("description");
         int calories = Integer.parseInt(request.getParameter("calories"));
-        Meal meal = new Meal(datetime, description, calories);
-        log.debug("Meal successfully created");
-        return meal;
+        return new Meal(datetime, description, calories);
     }
 }
