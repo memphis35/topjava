@@ -24,14 +24,18 @@ public class MapMealStorage implements MealStorage {
         meal.setId(id);
         storage.put(id, meal);
         log.debug("create meal with id {}", id);
-        return storage.get(id);
+        return meal;
     }
 
     @Override
     public Meal update(Meal meal) {
-        storage.replace(meal.getId(), meal);
+        if (storage.containsKey(meal.getId())) {
+            storage.replace(meal.getId(), meal);
+        } else {
+            return null;
+        }
         log.debug("update meal with id {}", meal.getId());
-        return storage.get(meal.getId());
+        return meal;
     }
 
     @Override
@@ -43,7 +47,7 @@ public class MapMealStorage implements MealStorage {
     @Override
     public Meal get(long id) {
         log.debug("get meal with id {}", id);
-        return storage.getOrDefault(id, null);
+        return storage.get(id);
     }
 
     public List<Meal> getAll() {
