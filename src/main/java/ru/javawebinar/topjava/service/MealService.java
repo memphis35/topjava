@@ -6,10 +6,9 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.List;
 
 import static ru.javawebinar.topjava.util.ValidationUtil.checkNotFoundWithId;
-import static ru.javawebinar.topjava.util.ValidationUtil.checkOwner;
 
 @Service
 public class MealService {
@@ -21,27 +20,22 @@ public class MealService {
     }
 
     public Meal create(Meal meal, int userId) {
-        meal.setUserId(userId);
-        return repository.save(meal);
+        return repository.save(meal, userId);
     }
 
-    public boolean delete(Integer mealId, int userId) {
-        Meal result = repository.get(mealId);
-        checkNotFoundWithId(result, mealId);
-        checkOwner(result, userId);
-        return repository.delete(mealId);
+    public Meal update(Meal meal, int userId) {
+        return checkNotFoundWithId(repository.save(meal, userId), meal.getId());
+    }
+
+    public void delete(int mealId, int userId) {
+        checkNotFoundWithId(repository.delete(mealId, userId), mealId);
     }
 
     public Meal get(Integer mealId, int userId) {
-        Meal result = repository.get(mealId);
-        checkNotFoundWithId(result, mealId);
-        checkOwner(result, userId);
-        return result;
+        return checkNotFoundWithId(repository.get(mealId, userId), mealId);
     }
 
-    public Collection<Meal> getAll(int authUserId) {
-        return repository.getAll().stream()
-                .filter(meal -> meal.getUserId() == authUserId)
-                .collect(Collectors.toList());
+    public List<Meal> getAll(int authUserId) {
+        return repository.getAll(authUserId);
     }
 }

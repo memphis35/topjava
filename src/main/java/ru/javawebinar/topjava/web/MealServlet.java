@@ -6,6 +6,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.model.Role;
 import ru.javawebinar.topjava.model.User;
+import ru.javawebinar.topjava.util.MealsUtil;
 import ru.javawebinar.topjava.web.meal.MealRestController;
 import ru.javawebinar.topjava.web.user.AdminRestController;
 
@@ -15,21 +16,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Objects;
 
 public class MealServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(MealServlet.class);
 
     private ClassPathXmlApplicationContext context;
+
     private MealRestController mealController;
-    private AdminRestController userController;
 
     @Override
     public void init() {
         context = new ClassPathXmlApplicationContext(getServletContext().getInitParameter("springXmlFile"));
         mealController = context.getBean("mealRestController", MealRestController.class);
-        userController = context.getBean("adminRestController", AdminRestController.class);
+        AdminRestController userController = context.getBean("adminRestController", AdminRestController.class);
         userController.create(new User(null, "User1", "user1@email.com", "securitySucks", Role.USER));
         userController.create(new User(null, "User2", "user2@email.com", "securitySucks", Role.USER));
     }
@@ -50,7 +50,7 @@ public class MealServlet extends HttpServlet {
                 log.info("Create {}", meal);
                 mealController.create(meal);
             } else {
-                log.info("Create {}", meal);
+                log.info("Update {}", meal);
                 mealController.update(meal);
             }
         }
@@ -70,7 +70,7 @@ public class MealServlet extends HttpServlet {
                 break;
             case "create":
             case "update":
-                final Meal meal = "create".equals(action) ? mealController.generate() : mealController.get(getId(request));
+                final Meal meal = "create".equals(action) ? MealsUtil.generate() : mealController.get(getId(request));
                 request.setAttribute("meal", meal);
                 request.getRequestDispatcher("/mealForm.jsp").forward(request, response);
                 break;
@@ -78,9 +78,14 @@ public class MealServlet extends HttpServlet {
             default:
                 log.info("getAll");
                 if (request.getParameter("filter") != null) {
-                    mealController.setFilterMap(getFilterParameters(request));
+                    request.setAttribute("meals", mealController.getMealToList(
+                            request.getParameter("startDate"),
+                            request.getParameter("endDate"),
+                            request.getParameter("startTime"),
+                            request.getParameter("endTime")));
+                } else {
+                    request.setAttribute("meals", mealController.getMealToList("", "", "", ""));
                 }
-                request.setAttribute("meals", mealController.getMealToList());
                 request.getRequestDispatcher("/meals.jsp").forward(request, response);
                 break;
         }
@@ -97,14 +102,5 @@ public class MealServlet extends HttpServlet {
                 LocalDateTime.parse(request.getParameter("dateTime")),
                 request.getParameter("description"),
                 Integer.parseInt(request.getParameter("calories")));
-    }
-
-    private Map<String, String> getFilterParameters(HttpServletRequest request) {
-        return Map.of(
-                "startDate", request.getParameter("startDate"),
-                "endDate", request.getParameter("endDate"),
-                "startTime", request.getParameter("startTime"),
-                "endTime", request.getParameter("endTime")
-        );
     }
 }
