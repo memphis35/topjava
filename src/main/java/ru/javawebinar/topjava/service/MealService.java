@@ -1,48 +1,47 @@
 package ru.javawebinar.topjava.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import static ru.javawebinar.topjava.util.ValidationUtil.checkNotFoundWithId;
+import static ru.javawebinar.topjava.util.ValidationUtil.checkOwner;
+
+@Service
 public class MealService {
-    private UserService userService;
+    private final MealRepository repository;
 
-    private MealRepository repository;
-
-    public MealService(MealRepository repository, UserService service) {
+    @Autowired
+    public MealService(MealRepository repository) {
         this.repository = repository;
-        this.userService = service;
     }
 
-    public Meal create(Meal meal, int authUserId) {
-        userService.get(authUserId).addMealId(repository.save(meal).getId());
-        return meal;
+    public Meal create(Meal meal, int userId) {
+        meal.setUserId(userId);
+        return repository.save(meal);
     }
 
-    public Meal get(Integer id, int authUserId) {
-        return userService.get(authUserId).isExistMealId(id) ? repository.get(id) : null;
+    public boolean delete(Integer mealId, int userId) {
+        Meal result = repository.get(mealId);
+        checkNotFoundWithId(result, mealId);
+        checkOwner(result, userId);
+        return repository.delete(mealId);
     }
 
-    public boolean delete(Integer id, int authUserId) {
-        if (userService.get(authUserId).removeMealId(id)) {
-            return repository.delete(id);
-        }
-        return false;
+    public Meal get(Integer mealId, int userId) {
+        Meal result = repository.get(mealId);
+        checkNotFoundWithId(result, mealId);
+        checkOwner(result, userId);
+        return result;
     }
 
     public Collection<Meal> getAll(int authUserId) {
         return repository.getAll().stream()
-                .filter(meal -> userService.get(authUserId).getMeals().contains(meal.getId()))
+                .filter(meal -> meal.getUserId() == authUserId)
                 .collect(Collectors.toList());
-    }
-
-    public Meal update(Meal meal, int authUserId) {
-        if (userService.get(authUserId).isExistMealId(meal.getId())) {
-            return repository.save(meal);
-        } else {
-            return null;
-        }
     }
 }

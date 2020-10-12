@@ -9,6 +9,7 @@ import ru.javawebinar.topjava.repository.UserRepository;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -56,10 +57,9 @@ public class InMemoryUserRepository implements UserRepository {
     @Override
     public User getByEmail(String email) {
         log.info("getByEmail {}", email);
-        return userRepository.values().stream()
+        Optional<User> user = userRepository.values().stream()
                 .filter(usr -> usr.getEmail().equals(email))
-                .limit(1)
-                .reduce((usr1, usr2) -> usr1)
-                .get();
+                .findFirst();
+        return user.orElse(null);
     }
 }

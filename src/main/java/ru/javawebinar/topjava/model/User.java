@@ -1,19 +1,19 @@
 package ru.javawebinar.topjava.model;
 
-import org.springframework.stereotype.Component;
-
-import java.util.*;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 import static ru.javawebinar.topjava.util.MealsUtil.DEFAULT_CALORIES_PER_DAY;
 
-@Component
 public class User extends AbstractNamedEntity {
 
     private String email;
 
     private String password;
 
-    private boolean enabled;
+    private boolean enabled = true;
 
     private Date registered = new Date();
 
@@ -78,26 +78,6 @@ public class User extends AbstractNamedEntity {
 
     public String getPassword() {
         return password;
-    }
-
-    public boolean addMealId(int id) {
-        return meals.add(id);
-    }
-
-    public boolean addMeals(Integer ... id) {
-        return meals.addAll(Arrays.asList(id));
-    }
-
-    public boolean isExistMealId(int id) {
-        return meals.contains(id);
-    }
-
-    public boolean removeMealId(Integer id) {
-        return meals.remove(id);
-    }
-
-    public Set<Integer> getMeals() {
-        return meals;
     }
 
     @Override
