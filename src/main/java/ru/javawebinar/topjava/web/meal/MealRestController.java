@@ -8,12 +8,12 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.service.MealService;
 import ru.javawebinar.topjava.to.MealTo;
 import ru.javawebinar.topjava.util.DateTimeUtil;
-import ru.javawebinar.topjava.util.MealsUtil;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import static ru.javawebinar.topjava.util.ValidationUtil.assureIdConsistent;
 import static ru.javawebinar.topjava.util.ValidationUtil.checkNew;
 import static ru.javawebinar.topjava.web.SecurityUtil.authUserCaloriesPerDay;
 import static ru.javawebinar.topjava.web.SecurityUtil.authUserId;
@@ -29,17 +29,16 @@ public class MealRestController {
         this.service = service;
     }
 
-    public Meal create(Meal meal) {
+    public void create(Meal meal) {
         checkNew(meal);
-        meal = service.create(meal, authUserId());
+        service.create(meal, authUserId());
         log.debug("User #{} has created meal with id={} successfully", authUserId(), meal.getId());
-        return meal;
     }
 
-    public Meal update(Meal meal) {
-        meal = service.update(meal, authUserId());
+    public void update(Meal meal, int id) {
+        assureIdConsistent(meal, id);
+        service.update(meal, authUserId());
         log.debug("User #{} has updated meal with id={} successfully", authUserId(), meal.getId());
-        return meal;
     }
 
     public void delete(Integer mealId) {
@@ -53,17 +52,17 @@ public class MealRestController {
         return result;
     }
 
-    public List<Meal> getAll() {
+    public List<MealTo> getAll() {
         log.debug("User #{} is getting list of meals", authUserId());
-        return service.getAll(authUserId());
+        return service.getAll(authUserId(), authUserCaloriesPerDay(), LocalDate.MIN, LocalDate.MAX, LocalTime.MIN, LocalTime.MAX);
     }
 
-    public List<MealTo> getMealToList(String strStartDate, String strEndDate, String strStartTime, String strEndTime) {
-        log.debug("Converting List of meals to List of MealTOs");
+    public List<MealTo> getAllFiltered(String strStartDate, String strEndDate, String strStartTime, String strEndTime) {
+        log.debug("User #{} is getting list of meals", authUserId());
         LocalDate startDate = strStartDate.isEmpty() ? LocalDate.MIN : DateTimeUtil.convertToDate(strStartDate);
         LocalDate endDate = strEndDate.isEmpty() ? LocalDate.MAX : DateTimeUtil.convertToDate(strEndDate).plusDays(1);
         LocalTime startTime = strStartTime.isEmpty() ? LocalTime.MIN : DateTimeUtil.convertToTime(strStartTime);
         LocalTime endTime = strEndTime.isEmpty() ? LocalTime.MAX : DateTimeUtil.convertToTime(strEndTime);
-        return MealsUtil.getFilteredTos(getAll(), authUserCaloriesPerDay(), startDate, endDate, startTime, endTime);
+        return service.getAll(authUserId(), authUserCaloriesPerDay(), startDate, endDate, startTime, endTime);
     }
 }

@@ -4,11 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.javawebinar.topjava.model.Meal;
-import ru.javawebinar.topjava.model.Role;
-import ru.javawebinar.topjava.model.User;
 import ru.javawebinar.topjava.util.MealsUtil;
 import ru.javawebinar.topjava.web.meal.MealRestController;
-import ru.javawebinar.topjava.web.user.AdminRestController;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -29,9 +26,6 @@ public class MealServlet extends HttpServlet {
     public void init() {
         context = new ClassPathXmlApplicationContext(getServletContext().getInitParameter("springXmlFile"));
         mealController = context.getBean("mealRestController", MealRestController.class);
-        AdminRestController userController = context.getBean("adminRestController", AdminRestController.class);
-        userController.create(new User(null, "User1", "user1@email.com", "securitySucks", Role.USER));
-        userController.create(new User(null, "User2", "user2@email.com", "securitySucks", Role.USER));
     }
 
     @Override
@@ -42,17 +36,13 @@ public class MealServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        if (request.getParameter("userId") != null) {
-            SecurityUtil.setUserId(Integer.parseInt(request.getParameter("userId")));
+        Meal meal = generateMeal(request);
+        if (meal.isNew()) {
+            log.info("Create {}", meal);
+            mealController.create(meal);
         } else {
-            Meal meal = generateMeal(request);
-            if (meal.isNew()) {
-                log.info("Create {}", meal);
-                mealController.create(meal);
-            } else {
-                log.info("Update {}", meal);
-                mealController.update(meal);
-            }
+            log.info("Update {}", meal);
+            mealController.update(meal, Integer.parseInt(request.getParameter("id")));
         }
         response.sendRedirect("meals");
     }
@@ -70,7 +60,7 @@ public class MealServlet extends HttpServlet {
                 break;
             case "create":
             case "update":
-                final Meal meal = "create".equals(action) ? MealsUtil.generate() : mealController.get(getId(request));
+                final Meal meal = "create".equals(action) ? MealsUtil.getDefaultMeal() : mealController.get(getId(request));
                 request.setAttribute("meal", meal);
                 request.getRequestDispatcher("/mealForm.jsp").forward(request, response);
                 break;
@@ -78,13 +68,13 @@ public class MealServlet extends HttpServlet {
             default:
                 log.info("getAll");
                 if (request.getParameter("filter") != null) {
-                    request.setAttribute("meals", mealController.getMealToList(
+                    request.setAttribute("meals", mealController.getAllFiltered(
                             request.getParameter("startDate"),
                             request.getParameter("endDate"),
                             request.getParameter("startTime"),
                             request.getParameter("endTime")));
                 } else {
-                    request.setAttribute("meals", mealController.getMealToList("", "", "", ""));
+                    request.setAttribute("meals", mealController.getAll());
                 }
                 request.getRequestDispatcher("/meals.jsp").forward(request, response);
                 break;
