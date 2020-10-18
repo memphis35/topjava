@@ -13,6 +13,7 @@ import ru.javawebinar.topjava.repository.UserRepository;
 
 import java.util.List;
 
+@SuppressWarnings("SqlResolve")
 @Repository
 public class JdbcUserRepository implements UserRepository {
 

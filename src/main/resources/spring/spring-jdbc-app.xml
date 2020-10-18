@@ -1,0 +1,23 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <bean class="ru.javawebinar.topjava.service.MealService" id="jdbcMealService">
+        <constructor-arg name="repository" ref="jdbcMealRepository"/>
+    </bean>
+
+    <bean class="ru.javawebinar.topjava.web.meal.MealRestController">
+        <constructor-arg name="service" ref="jdbcMealService"/>
+    </bean>
+
+    <bean class="ru.javawebinar.topjava.service.UserService" id="jdbcUserService">
+        <constructor-arg name="repository" ref="jdbcUserRepository"/>
+    </bean>
+
+    <bean class="ru.javawebinar.topjava.web.user.AdminRestController">
+        <property name="service" ref="jdbcUserService"/>
+    </bean>
+
+    <context:component-scan base-package="ru.javawebinar.**.repository.jdbc"/>
+
+</beans>
