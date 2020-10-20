@@ -79,7 +79,7 @@ public class MealServiceTest {
     public void getAll() {
         List<Meal> mealsFromUser = Arrays.asList(
                 mealFromUser100008, mealFromUser100007, mealFromUser100006, mealFromUser100005,
-                mealFromUser100004, mealFromUser100003, mealFromUser100008);
+                mealFromUser100004, mealFromUser100003, mealFromUser100002);
         List<Meal> mealsFromAdmin = Arrays.asList(
                 mealFromAdmin100015, mealFromAdmin100014, mealFromAdmin100013, mealFromAdmin100012,
                 mealFromAdmin100011,mealFromAdmin100010, mealFromAdmin100009);
@@ -96,8 +96,8 @@ public class MealServiceTest {
 
     @Test
     public void updateNotExistingMealFailed() {
-        Meal expected = new Meal(NOT_EXISTING_MEAL_ID, LocalDateTime.of(9999, 9, 9, 9, 9), "Updated meal", 9999);
-        assertThrows(NotFoundException.class, () -> service.update(expected, USER_ID));
+        Meal notExistingMeal = new Meal(NOT_EXISTING_MEAL_ID, LocalDateTime.of(9999, 9, 9, 9, 9), "Updated meal", 9999);
+        assertThrows(NotFoundException.class, () -> service.update(notExistingMeal, USER_ID));
     }
 
     @Test
@@ -112,6 +112,5 @@ public class MealServiceTest {
         expected.setId(created.getId());
         assertMatch(created, expected);
         assertMatch(service.get(expected.getId(), USER_ID), expected);
-        service.delete(expected.getId(), USER_ID);
     }
 }
