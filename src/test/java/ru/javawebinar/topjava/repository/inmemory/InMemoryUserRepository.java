@@ -3,7 +3,7 @@ package ru.javawebinar.topjava.repository.inmemory;
 import org.springframework.stereotype.Repository;
 import ru.javawebinar.topjava.model.User;
 import ru.javawebinar.topjava.repository.UserRepository;
-import ru.javawebinar.topjava.util.testdata.UserTestData;
+import ru.javawebinar.topjava.UserTestData;
 
 import java.util.Comparator;
 import java.util.List;

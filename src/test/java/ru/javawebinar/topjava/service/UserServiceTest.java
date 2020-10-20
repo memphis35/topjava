@@ -16,10 +16,10 @@ import ru.javawebinar.topjava.util.exception.NotFoundException;
 import java.util.List;
 
 import static org.junit.Assert.assertThrows;
-import static ru.javawebinar.topjava.util.testdata.UserTestData.*;
+import static ru.javawebinar.topjava.UserTestData.*;
 
 @ContextConfiguration({
-        "classpath:spring/spring-jdbc-app.xml",
+        "classpath:spring/spring-jdbc-repo.xml",
         "classpath:spring/spring-db.xml"
 })
 @RunWith(SpringRunner.class)

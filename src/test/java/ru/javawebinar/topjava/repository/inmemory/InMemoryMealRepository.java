@@ -5,14 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
-import ru.javawebinar.topjava.util.testdata.UserTestData;
 import ru.javawebinar.topjava.util.MealsUtil;
 import ru.javawebinar.topjava.util.Util;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -20,6 +18,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static ru.javawebinar.topjava.UserTestData.*;
 
 @Repository
 public class InMemoryMealRepository implements MealRepository {
@@ -29,11 +29,9 @@ public class InMemoryMealRepository implements MealRepository {
     private final Map<Integer, InMemoryBaseRepository<Meal>> usersMealsMap = new ConcurrentHashMap<>();
 
     {
-        MealsUtil.meals.forEach(meal -> save(meal, UserTestData.USER_ID));
-        save(new Meal(LocalDateTime.of(2015, Month.JUNE, 1, 14, 0), "Админ ланч", 510), UserTestData.ADMIN_ID);
-        save(new Meal(LocalDateTime.of(2015, Month.JUNE, 1, 21, 0), "Админ ужин", 1500), UserTestData.ADMIN_ID);
+        MealsUtil.mealsFromUser.forEach(meal -> save(new Meal(meal), USER_ID));
+        MealsUtil.mealsFromAdmin.forEach(meal -> save(new Meal(meal), ADMIN_ID));
     }
-
 
     @Override
     public Meal save(Meal meal, int userId) {

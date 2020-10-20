@@ -10,10 +10,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import ru.javawebinar.topjava.repository.inmemory.InMemoryUserRepository;
 import ru.javawebinar.topjava.util.exception.NotFoundException;
 
-import static ru.javawebinar.topjava.util.testdata.UserTestData.NOT_FOUND;
-import static ru.javawebinar.topjava.util.testdata.UserTestData.USER_ID;
+import static ru.javawebinar.topjava.UserTestData.NOT_FOUND;
+import static ru.javawebinar.topjava.UserTestData.USER_ID;
 
-@ContextConfiguration("classpath:spring/spring-inmemory-app.xml")
+@ContextConfiguration({
+        "classpath:spring/spring-app.xml",
+        "classpath:spring/spring-inmemory-repo.xml"})
 @RunWith(SpringRunner.class)
 public class InMemoryAdminRestControllerSpringTest {
 
