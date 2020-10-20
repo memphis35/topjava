@@ -3,7 +3,6 @@ package ru.javawebinar.topjava.web.user;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.javawebinar.topjava.repository.inmemory.InMemoryUserRepository;
@@ -18,10 +17,9 @@ public class InMemoryAdminRestControllerTest {
     private static final Logger log = LoggerFactory.getLogger(InMemoryAdminRestControllerTest.class);
 
     private static ConfigurableApplicationContext appCtx;
-    @Autowired
+
     private static AdminRestController controller;
 
-    @Autowired
     private static InMemoryUserRepository repository;
 
     @BeforeClass
