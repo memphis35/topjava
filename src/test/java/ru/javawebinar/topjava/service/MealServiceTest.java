@@ -1,6 +1,10 @@
 package ru.javawebinar.topjava.service;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -13,6 +17,9 @@ import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertThrows;
 import static ru.javawebinar.topjava.MealTestData.*;
@@ -29,6 +36,15 @@ public class MealServiceTest {
 
     @Autowired
     private MealService service;
+
+    @ClassRule
+    public static final ClassTestTimeRule classRule = new ClassTestTimeRule();
+
+    @Rule
+    public TestTimeRule rule = new TestTimeRule();
+
+    @Rule
+    public final TestName testName = new TestName();
 
     @Test
     public void delete() throws Exception {
@@ -107,5 +123,40 @@ public class MealServiceTest {
     @Test
     public void getBetweenWithNullDates() throws Exception {
         MEAL_MATCHER.assertMatch(service.getBetweenInclusive(null, null, USER_ID), meals);
+    }
+
+    private class TestTimeRule extends ExternalResource {
+        private Date startTime;
+
+        @Override
+        protected void before() throws Throwable {
+            super.before();
+            startTime = new Date();
+        }
+
+        @Override
+        protected void after() {
+            long resultTime = System.currentTimeMillis() - startTime.getTime();
+            classRule.addTestResult(testName.getMethodName(), resultTime);
+            System.out.printf("Test execution time: %d ns\n", resultTime);
+        }
+    }
+
+    private static class ClassTestTimeRule extends ExternalResource {
+        private Map<String, Long> testResults;
+        @Override
+        protected void before() throws Throwable {
+            testResults = new HashMap<>();
+        }
+
+        @Override
+        protected void after() {
+            testResults.forEach((name, time) -> System.out.printf("Test: %S | Execution time: %d ns\n", name, time));
+            testResults.clear();
+        }
+
+        public void addTestResult(String testName, Long resultTime) {
+            testResults.put(testName, resultTime);
+        }
     }
 }
