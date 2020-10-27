@@ -1,11 +1,14 @@
 package ru.javawebinar.topjava.service;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import ch.qos.logback.core.pattern.color.ANSIConstants;
+import org.junit.*;
 import org.junit.rules.ExternalResource;
+import org.junit.rules.Stopwatch;
 import org.junit.rules.TestName;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.ContextConfiguration;
@@ -17,7 +20,6 @@ import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +35,7 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 @RunWith(SpringRunner.class)
 @Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
 public class MealServiceTest {
+    private static final Logger log = LoggerFactory.getLogger(MealServiceTest.class);
 
     @Autowired
     private MealService service;
@@ -125,38 +128,31 @@ public class MealServiceTest {
         MEAL_MATCHER.assertMatch(service.getBetweenInclusive(null, null, USER_ID), meals);
     }
 
-    private class TestTimeRule extends ExternalResource {
-        private Date startTime;
-
+    private class TestTimeRule extends Stopwatch {
         @Override
-        protected void before() throws Throwable {
-            super.before();
-            startTime = new Date();
-        }
-
-        @Override
-        protected void after() {
-            long resultTime = System.currentTimeMillis() - startTime.getTime();
-            classRule.addTestResult(testName.getMethodName(), resultTime);
-            System.out.printf("Test execution time: %d ns\n", resultTime);
+        protected void succeeded(long nanos, Description description) {
+            log.info("Test execution time: {}", System.nanoTime());
+            classRule.addTestResult(testName.getMethodName(), nanos);
         }
     }
 
     private static class ClassTestTimeRule extends ExternalResource {
-        private Map<String, Long> testResults;
+        private StringBuilder testResults;
+
         @Override
         protected void before() throws Throwable {
-            testResults = new HashMap<>();
+            testResults = new StringBuilder();
+            testResults.append(String.format("\n| %-30s| %-17s |", "Test name", "Result time"));
+            testResults.append("\n=====================================================");
         }
 
         @Override
         protected void after() {
-            testResults.forEach((name, time) -> System.out.printf("Test: %S | Execution time: %d ns\n", name, time));
-            testResults.clear();
+            log.info(testResults.toString());
         }
 
         public void addTestResult(String testName, Long resultTime) {
-            testResults.put(testName, resultTime);
+            testResults.append(String.format("\n| %-30s| %,15d ns|", testName, resultTime));
         }
     }
 }
