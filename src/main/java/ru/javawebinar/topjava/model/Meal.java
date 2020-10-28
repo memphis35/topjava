@@ -1,19 +1,46 @@
 package ru.javawebinar.topjava.model;
 
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+@NamedQueries({
+        @NamedQuery(name = Meal.MEAL_GET, query = "SELECT m FROM Meal m WHERE m.user.id=?1 AND m.id=:id"),
+        @NamedQuery(name = Meal.MEAL_GETALL, query = "SELECT m FROM Meal m WHERE m.user.id=?1 ORDER BY m.dateTime DESC"),
+        @NamedQuery(name = Meal.MEAL_GETALL_FILTERED, query = "SELECT m FROM Meal m WHERE m.user.id=?1 AND m.dateTime>=?2 AND m.dateTime<?3 ORDER BY m.dateTime DESC"),
+        @NamedQuery(name = Meal.MEAL_DELETE, query = "DELETE FROM Meal m WHERE m.user.id=?1 AND m.id=?2"),
+        @NamedQuery(name = Meal.MEAL_UPDATE, query = "UPDATE Meal m SET m.dateTime=?1, m.description=?2, m.calories=?3 WHERE m.id=?4 AND m.user.id=?5")
+})
+@Entity
+@Table(name = "meals", uniqueConstraints = @UniqueConstraint(name = "meals_unique_datetime_idx", columnNames = {"user_id", "date_time"}))
 public class Meal extends AbstractBaseEntity {
+    public static final String MEAL_GET = "Meal.get";
+    public static final String MEAL_GETALL = "Meal.getAll";
+    public static final String MEAL_GETALL_FILTERED = "Meal.getAllFiltered";
+    public static final String MEAL_DELETE = "Meal.delete";
+    public static final String MEAL_UPDATE = "Meal.update";
+
+    @Column(name = "date_time", nullable = false)
+    @NotNull
     private LocalDateTime dateTime;
 
+    @Column(name = "description", nullable = false)
+    @Size(min = 2, max = 120, message = "Description length should be between 2 and 120 chars")
+    @NotNull
+    @NotBlank
     private String description;
 
+    @Column(name = "calories", nullable = false)
+    @Min(value = 10)
+    @Max(value = 5000)
+    @NotNull
     private int calories;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @NotNull
     private User user;
 
     public Meal() {
