@@ -28,18 +28,16 @@ public class Meal extends AbstractBaseEntity {
 
     @Column(name = "description", nullable = false)
     @Size(min = 2, max = 120, message = "Description length should be between 2 and 120 chars")
-    @NotNull
     @NotBlank
     private String description;
 
     @Column(name = "calories", nullable = false)
     @Min(value = 10)
     @Max(value = 5000)
-    @NotNull
     private int calories;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     @NotNull
     private User user;
 

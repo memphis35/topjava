@@ -28,8 +28,11 @@ public class JpaMealRepository implements MealRepository {
             meal.setUser(user);
             manager.persist(meal);
             return meal;
+        } else {
+            Meal foundedMeal = manager.find(Meal.class, meal.getId());
+            return foundedMeal != null && foundedMeal.getUser().getId() == userId ? manager.merge(meal) : null;
         }
-        return manager.find(Meal.class, meal.getId()).getUser().getId() == userId ? manager.merge(meal) : null;
+
     }
 
     @Override

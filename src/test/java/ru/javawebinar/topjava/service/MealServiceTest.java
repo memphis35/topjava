@@ -1,7 +1,8 @@
 package ru.javawebinar.topjava.service;
 
-import ch.qos.logback.core.pattern.color.ANSIConstants;
-import org.junit.*;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.Stopwatch;
 import org.junit.rules.TestName;
@@ -20,8 +21,7 @@ import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertThrows;
 import static ru.javawebinar.topjava.MealTestData.*;
@@ -44,10 +44,7 @@ public class MealServiceTest {
     public static final ClassTestTimeRule classRule = new ClassTestTimeRule();
 
     @Rule
-    public TestTimeRule rule = new TestTimeRule();
-
-    @Rule
-    public final TestName testName = new TestName();
+    public TestTimeRule timeTestRule = new TestTimeRule();
 
     @Test
     public void delete() throws Exception {
@@ -111,6 +108,11 @@ public class MealServiceTest {
     }
 
     @Test
+    public void updateNotExistingMeal() {
+        assertThrows(NotFoundException.class, () -> service.update(notExistingMeal, USER_ID));
+    }
+
+    @Test
     public void getAll() throws Exception {
         MEAL_MATCHER.assertMatch(service.getAll(USER_ID), meals);
     }
@@ -130,9 +132,9 @@ public class MealServiceTest {
 
     private class TestTimeRule extends Stopwatch {
         @Override
-        protected void succeeded(long nanos, Description description) {
-            log.info("Test execution time: {}", System.nanoTime());
-            classRule.addTestResult(testName.getMethodName(), nanos);
+        protected void finished(long nanos, Description description) {
+            log.info("Test execution time: {} ms", nanos / 1_000_000);
+            classRule.addTestResult(description.getMethodName(), nanos);
         }
     }
 
@@ -142,8 +144,8 @@ public class MealServiceTest {
         @Override
         protected void before() throws Throwable {
             testResults = new StringBuilder();
-            testResults.append(String.format("\n| %-30s| %-17s |", "Test name", "Result time"));
-            testResults.append("\n=====================================================");
+            testResults.append(String.format("\n| %-30s| %13s |", "Test name", "Result time"));
+            testResults.append("\n=================================================");
         }
 
         @Override
@@ -152,7 +154,7 @@ public class MealServiceTest {
         }
 
         public void addTestResult(String testName, Long resultTime) {
-            testResults.append(String.format("\n| %-30s| %,15d ns|", testName, resultTime));
+            testResults.append(String.format("\n| %-30s| %11d ms|", testName, resultTime / 1_000_000));
         }
     }
 }
