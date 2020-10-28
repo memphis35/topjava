@@ -1,48 +1,50 @@
 package ru.javawebinar.topjava.service;
 
+import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.util.List;
 
+import static ru.javawebinar.topjava.util.DateTimeUtil.atStartOfDayOrMin;
+import static ru.javawebinar.topjava.util.DateTimeUtil.atStartOfNextDayOrMax;
+import static ru.javawebinar.topjava.util.ValidationUtil.checkNotFoundWithId;
+
+@Service
 public class MealService {
-    private UserService userService;
 
-    private MealRepository repository;
+    private final MealRepository repository;
 
-    public MealService(MealRepository repository, UserService service) {
+    public MealService(MealRepository repository) {
         this.repository = repository;
-        this.userService = service;
     }
 
-    public Meal create(Meal meal, int authUserId) {
-        userService.get(authUserId).addMealId(repository.save(meal).getId());
-        return meal;
+    public Meal get(int id, int userId) {
+        return checkNotFoundWithId(repository.get(id, userId), id);
     }
 
-    public Meal get(Integer id, int authUserId) {
-        return userService.get(authUserId).isExistMealId(id) ? repository.get(id) : null;
+    public void delete(int id, int userId) {
+        checkNotFoundWithId(repository.delete(id, userId), id);
     }
 
-    public boolean delete(Integer id, int authUserId) {
-        if (userService.get(authUserId).removeMealId(id)) {
-            return repository.delete(id);
-        }
-        return false;
+    public List<Meal> getBetweenInclusive(@Nullable LocalDate startDate, @Nullable LocalDate endDate, int userId) {
+        return repository.getBetweenHalfOpen(atStartOfDayOrMin(startDate), atStartOfNextDayOrMax(endDate), userId);
     }
 
-    public Collection<Meal> getAll(int authUserId) {
-        return repository.getAll().stream()
-                .filter(meal -> userService.get(authUserId).getMeals().contains(meal.getId()))
-                .collect(Collectors.toList());
+    public List<Meal> getAll(int userId) {
+        return repository.getAll(userId);
     }
 
-    public Meal update(Meal meal, int authUserId) {
-        if (userService.get(authUserId).isExistMealId(meal.getId())) {
-            return repository.save(meal);
-        } else {
-            return null;
-        }
+    public void update(Meal meal, int userId) {
+        Assert.notNull(meal, "meal must not be null");
+        checkNotFoundWithId(repository.save(meal, userId), meal.id());
+    }
+
+    public Meal create(Meal meal, int userId) {
+        Assert.notNull(meal, "meal must not be null");
+        return repository.save(meal, userId);
     }
 }
