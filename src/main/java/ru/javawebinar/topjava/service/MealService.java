@@ -1,5 +1,6 @@
 package ru.javawebinar.topjava.service;
 
+import org.hibernate.annotations.Fetch;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
