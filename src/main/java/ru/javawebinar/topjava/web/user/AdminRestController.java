@@ -9,11 +9,6 @@ import java.util.List;
 public class AdminRestController extends AbstractUserController {
 
     @Override
-    public List<User> getAll() {
-        return super.getAll();
-    }
-
-    @Override
     public User get(int id) {
         return super.get(id);
     }

@@ -1,6 +1,5 @@
 package ru.javawebinar.topjava.service;
 
-import org.hibernate.annotations.Fetch;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -25,6 +24,10 @@ public class MealService {
 
     public Meal get(int id, int userId) {
         return checkNotFoundWithId(repository.get(id, userId), id);
+    }
+
+    public Meal getWithUser(int id, int userId) {
+        return repository.getWithUser(id, userId);
     }
 
     public void delete(int id, int userId) {

@@ -9,7 +9,8 @@ import java.time.format.DateTimeFormatter;
 
 @Repository
 @Profile("hsqldb")
-public class HsqlJdbcMealRepository extends JdbcMealRepository { //2020-01-30 10:00:00
+public class HsqlJdbcMealRepository extends JdbcMealRepository {
+    private final DateTimeFormatter formatter;
     public HsqlJdbcMealRepository(JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         super(jdbcTemplate, namedParameterJdbcTemplate);
         formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

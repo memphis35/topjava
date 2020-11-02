@@ -12,12 +12,11 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Function;
 
-public class JdbcMealRepository implements MealRepository {
-    protected DateTimeFormatter formatter;
+public abstract class JdbcMealRepository implements MealRepository {
+
     protected Function<LocalDateTime, Object> datetimeConverter;
 
     private static final RowMapper<Meal> ROW_MAPPER = BeanPropertyRowMapper.newInstance(Meal.class);
@@ -38,8 +37,8 @@ public class JdbcMealRepository implements MealRepository {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
-    public <DATETIME> Meal save(Meal meal, int userId) {
-        DATETIME datetime = (DATETIME) datetimeConverter.apply(meal.getDateTime());
+    public Meal save(Meal meal, int userId) {
+        Object datetime = datetimeConverter.apply(meal.getDateTime());
         MapSqlParameterSource map = new MapSqlParameterSource()
                 .addValue("id", meal.getId())
                 .addValue("description", meal.getDescription())
@@ -79,9 +78,9 @@ public class JdbcMealRepository implements MealRepository {
                 "SELECT * FROM meals WHERE user_id=? ORDER BY date_time DESC", ROW_MAPPER, userId);
     }
 
-    public <DATETIME> List<Meal> getBetweenHalfOpen(LocalDateTime startDateTime, LocalDateTime endDateTime, int userId) {
-        DATETIME start = (DATETIME) datetimeConverter.apply(startDateTime);
-        DATETIME end = (DATETIME) datetimeConverter.apply(endDateTime);
+    public List<Meal> getBetweenHalfOpen(LocalDateTime startDateTime, LocalDateTime endDateTime, int userId) {
+        Object start = datetimeConverter.apply(startDateTime);
+        Object end = datetimeConverter.apply(endDateTime);
         return jdbcTemplate.query(
                 "SELECT * FROM meals WHERE user_id=?  AND date_time >=  ? AND date_time < ? ORDER BY date_time DESC",
                 ROW_MAPPER, userId, start, end);
