@@ -23,12 +23,12 @@ public class DataJpaMealRepository implements MealRepository {
     @Override
     @Transactional
     public Meal save(Meal meal, int userId) {
-        if (meal.isNew()) {
+        if (meal.isNew() || get(meal.getId(), userId) != null) {
             User user = userRepository.getOne(userId);
             meal.setUser(user);
             return mealRepository.save(meal);
         }
-        return mealRepository.update(meal.getDateTime(), meal.getDescription(), meal.getCalories(), meal.getId(), userId) == 1 ? meal : null;
+        return null;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class DataJpaMealRepository implements MealRepository {
 
     @Override
     public List<Meal> getBetweenHalfOpen(LocalDateTime startDateTime, LocalDateTime endDateTime, int userId) {
-        return mealRepository.getAllByUserIdAndDateTimeGreaterThanEqualAndDateTimeLessThanOrderByDateTimeDesc(userId, startDateTime, endDateTime);
+        return mealRepository.getAllFiltered(startDateTime, endDateTime, userId);
     }
 
     @Override

@@ -11,17 +11,14 @@ import ru.javawebinar.topjava.model.Meal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 public interface CrudMealRepository extends JpaRepository<Meal, Integer> {
 
     Meal findByIdAndUserId(int id, int userId);
 
     List<Meal> findAllByUserIdOrderByDateTimeDesc(int userId);
 
-    List<Meal> getAllByUserIdAndDateTimeGreaterThanEqualAndDateTimeLessThanOrderByDateTimeDesc(int userId, LocalDateTime start, LocalDateTime end);
-
     @Transactional
-    @Modifying
     int deleteByIdAndUserId(int id, int userId);
 
     @Transactional
@@ -33,6 +30,11 @@ public interface CrudMealRepository extends JpaRepository<Meal, Integer> {
                @Param("id") Integer id,
                @Param("user_id") int userId);
 
-    @Query(value = "SELECT m FROM Meal m JOIN FETCH m.user WHERE m.id=:id AND m.user.id=:user_id")
+    @Query("SELECT m FROM Meal m JOIN FETCH m.user WHERE m.id=:id AND m.user.id=:user_id")
     Meal getMealWithUser(@Param("id") int id, @Param("user_id") int userId);
+
+    @Query("SELECT m FROM Meal m WHERE m.user.id=:user_id AND m.dateTime>=:start AND m.dateTime<:end ORDER BY m.dateTime DESC")
+    List<Meal> getAllFiltered(@Param("start") LocalDateTime startDateTime,
+                              @Param("end") LocalDateTime endDateTime,
+                              @Param("user_id") int userId);
 }
