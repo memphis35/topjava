@@ -2,7 +2,6 @@ package ru.javawebinar.topjava.service.datajpa;
 
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 import ru.javawebinar.topjava.Profiles;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.service.MealServiceTest;
@@ -15,7 +14,6 @@ import static ru.javawebinar.topjava.UserTestData.admin;
 public class DataJpaMealServiceTest extends MealServiceTest {
 
     @Test
-    @Transactional
     public void getMealWithUser() {
         Meal expectedMeal = adminMeal1;
         expectedMeal.setUser(admin);
