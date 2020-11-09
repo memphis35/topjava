@@ -4,19 +4,19 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.dao.DataAccessException;
-import org.springframework.test.context.ActiveProfiles;
 import ru.javawebinar.topjava.UserTestData;
 import ru.javawebinar.topjava.model.Role;
 import ru.javawebinar.topjava.model.User;
+import ru.javawebinar.topjava.repository.JpaUtil;
 import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import javax.validation.ConstraintViolationException;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-import ru.javawebinar.topjava.repository.JpaUtil;
 
 import static org.junit.Assert.assertThrows;
 import static ru.javawebinar.topjava.UserTestData.*;
@@ -25,6 +25,24 @@ public abstract class AbstractUserServiceTest extends AbstractServiceTest {
 
     @Autowired
     protected UserService service;
+
+    @Autowired(required = false)
+    private CacheManager cacheManager;
+
+    @Autowired(required = false)
+    protected JpaUtil jpaUtil;
+
+    @Autowired
+    protected Environment environment;
+
+    @Before
+    public void setUp() {
+        Set<String> profiles = Set.of(environment.getActiveProfiles());
+        if (!profiles.contains("jdbc")) {
+            Objects.requireNonNull(cacheManager.getCache("users")).clear();
+            jpaUtil.clear2ndLevelHibernateCache();
+        }
+    }
 
     @Test
     public void create() {
