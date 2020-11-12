@@ -1,5 +1,7 @@
 package ru.javawebinar.topjava.repository.datajpa;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -17,7 +19,7 @@ public interface CrudUserRepository extends JpaRepository<User, Integer> {
 
     User getByEmail(String email);
 
-    @EntityGraph(attributePaths = {"meals", "roles"})
+    @Fetch(value = FetchMode.SELECT)
     @Query("SELECT u FROM User u WHERE u.id=?1")
-    User getWithMeals(int id);
+    User getByIdWithMealsAndRoles(int id);
 }

@@ -1,11 +1,15 @@
 package ru.javawebinar.topjava.service;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.DataAccessException;
+import ru.javawebinar.topjava.MealTestData;
 import ru.javawebinar.topjava.UserTestData;
 import ru.javawebinar.topjava.model.Role;
 import ru.javawebinar.topjava.model.User;
@@ -21,15 +25,18 @@ import java.util.Set;
 import static org.junit.Assert.assertThrows;
 import static ru.javawebinar.topjava.UserTestData.*;
 
+@FixMethodOrder(value = MethodSorters.NAME_ASCENDING)
 public abstract class AbstractUserServiceTest extends AbstractServiceTest {
 
     @Autowired
     protected UserService service;
 
-    @Autowired(required = false)
+    @Autowired
+    @Lazy
     private CacheManager cacheManager;
 
-    @Autowired(required = false)
+    @Autowired
+    @Lazy
     protected JpaUtil jpaUtil;
 
     @Autowired
@@ -89,14 +96,19 @@ public abstract class AbstractUserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void update() {
+    public void getByEmailNotFound() {
+        assertThrows(NotFoundException.class, () -> service.getByEmail("notfound@email.ru"));
+    }
+
+    @Test
+    public void _1update() {
         User updated = getUpdated();
         service.update(updated);
         USER_MATCHER.assertMatch(service.get(USER_ID), getUpdated());
     }
 
     @Test
-    public void getAll() {
+    public void _2getAll() {
         List<User> all = service.getAll();
         USER_MATCHER.assertMatch(all, admin, user);
     }

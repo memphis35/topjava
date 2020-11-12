@@ -62,7 +62,7 @@ public class JpaUserRepository implements UserRepository {
         List<User> users = em.createNamedQuery(User.BY_EMAIL, User.class)
                 .setParameter(1, email)
                 .getResultList();
-        return DataAccessUtils.objectResult(users, User.class);
+        return users.size() > 0 ? DataAccessUtils.objectResult(users, User.class) : null;
     }
 
     @Override

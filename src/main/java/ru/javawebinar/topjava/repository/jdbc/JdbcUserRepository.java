@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -16,17 +16,16 @@ import ru.javawebinar.topjava.repository.UserRepository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 
 @Repository
 @Transactional(readOnly = true)
 public class JdbcUserRepository extends AbstractJdbcRepository implements UserRepository {
 
-    private final static String GET = "SELECT * FROM users u LEFT JOIN user_roles r ON u.id=r.user_id WHERE id=?";
-    private final static String GET_BY_EMAIL = "SELECT * FROM users u LEFT JOIN user_roles r ON u.id=r.user_id WHERE email=?";
+    private final static String GET = "SELECT * FROM users WHERE id=?";
+    private final static String GET_BY_EMAIL = "SELECT * FROM users WHERE email=?";
+    private final static String GET_ROLES = "SELECT * FROM user_roles WHERE user_id=?";
 
     private static final BeanPropertyRowMapper<User> ROW_MAPPER = BeanPropertyRowMapper.newInstance(User.class);
 
@@ -54,18 +53,13 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         if (user.isNew()) {
             Number newKey = insertUser.executeAndReturnKey(parameterSource);
             user.setId(newKey.intValue());
-            user.getRoles().forEach(role -> params.add(new Object[]{user.getId(), role.name()}));
-        } else {
-            int userQuery = namedParameterJdbcTemplate.update("""
-                       UPDATE users SET name=:name, email=:email, password=:password, 
-                       registered=:registered, enabled=:enabled, calories_per_day=:caloriesPerDay WHERE id=:id
-                    """, parameterSource);
-            if (userQuery == 0) {
-                return null;
-            }
-            user.getRoles().forEach(role -> params.add(new Object[]{user.getId(), role.name()}));
-            jdbcTemplate.update("DELETE FROM user_roles WHERE user_id=?", user.getId());
+        } else if (namedParameterJdbcTemplate.update("""
+                UPDATE users SET name=:name, email=:email, password=:password, registered=:registered, enabled=:enabled, 
+                calories_per_day=:caloriesPerDay WHERE id=:id""", parameterSource) == 0) {
+            return null;
         }
+        user.getRoles().forEach(role -> params.add(new Object[]{user.getId(), role.name()}));
+        jdbcTemplate.update("DELETE FROM user_roles WHERE user_id=?", user.getId());
         jdbcTemplate.batchUpdate("INSERT INTO user_roles VALUES (?, ?)", params);
         return user;
     }
@@ -77,37 +71,44 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     public User get(int id) {
-        return get0(GET, id);
+        return getByParameter(GET, id);
     }
 
-    private <T> User get0(String query, T parameter) {
-        List<User> users = jdbcTemplate.query(query, (rs, row) -> getUser(rs, rs.getInt("id")), parameter);
-        return DataAccessUtils.singleResult(users);
+    private <T> User getByParameter(String query, T parameter) {
+        List<User> users = jdbcTemplate.query(query, (rs, row) -> getUser(rs), parameter);
+        if (users.size() == 1) {
+            User user = DataAccessUtils.objectResult(users, User.class);
+            List<Role> userRoles = jdbcTemplate.query(GET_ROLES, (rs, rowNum) ->
+                    Role.valueOf(rs.getString("role")), user.getId());
+            user.setRoles(userRoles);
+            return user;
+        } else {
+            return null;
+        }
     }
 
     @Override
     public User getByEmail(String email) {
-        return get0(GET_BY_EMAIL, email);
+        return getByParameter(GET_BY_EMAIL, email);
     }
 
     @Override
     public List<User> getAll() {
-        List<User> users = new ArrayList<>();
-        jdbcTemplate.query(
-                "SELECT * FROM users u LEFT JOIN user_roles r ON u.id=r.user_id ORDER BY u.name, u.email",
-                (RowMapper<User>) (rs, rowNum) -> {
-                    System.out.println(rowNum);
-                    do {
-                        int userId = rs.getInt("id");
-                        User user = getUser(rs, userId);
-                        users.add(user);
-                    } while (!rs.isAfterLast());
-                    return null;
+        return jdbcTemplate.query("SELECT * FROM users u LEFT JOIN user_roles r ON u.id=r.user_id ORDER BY u.name, u.email",
+                (ResultSetExtractor<List<User>>) rs -> {
+                    Map<Integer, User> users = new LinkedHashMap<>();
+                    while (rs.next()) {
+                        User user = getUser(rs);
+                        users.putIfAbsent(user.getId(), user);
+                        user = users.get(user.getId());
+                        Role userRole = Role.valueOf(rs.getString("role"));
+                        user.getRoles().add(userRole);
+                    }
+                    return new ArrayList<>(users.values());
                 });
-        return users;
     }
 
-    private User getUser(ResultSet rs, int userId) throws SQLException {
+    private User getUser(ResultSet rs) throws SQLException {
         User user = new User();
         user.setId(rs.getInt("id"));
         user.setCaloriesPerDay(rs.getInt("calories_per_day"));
@@ -116,14 +117,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         user.setPassword(rs.getString("password"));
         user.setEnabled(rs.getBoolean("enabled"));
         user.setRegistered(rs.getDate("registered"));
-
-        Set<Role> roles = new HashSet<>();
-        boolean haveNext;
-        do {
-            roles.add(Role.valueOf(rs.getString("role")));
-            haveNext = rs.next();
-        } while (haveNext && rs.getInt("id") == userId);
-        user.setRoles(roles);
+        user.setRoles(new HashSet<>());
         return user;
     }
 }
