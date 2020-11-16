@@ -1,15 +1,14 @@
 package ru.javawebinar.topjava.service;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.DataAccessException;
-import ru.javawebinar.topjava.MealTestData;
 import ru.javawebinar.topjava.UserTestData;
 import ru.javawebinar.topjava.model.Role;
 import ru.javawebinar.topjava.model.User;
@@ -52,7 +51,7 @@ public abstract class AbstractUserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void create() {
+    public void _0create() {
         User created = service.create(getNew());
         int newId = created.id();
         User newUser = getNew();
@@ -104,7 +103,8 @@ public abstract class AbstractUserServiceTest extends AbstractServiceTest {
     public void _1update() {
         User updated = getUpdated();
         service.update(updated);
-        USER_MATCHER.assertMatch(service.get(USER_ID), getUpdated());
+        List<User> updatedList = List.of(admin, getUpdated());
+        USER_MATCHER.assertMatch(updatedList, service.getAll());
     }
 
     @Test

@@ -17,7 +17,6 @@ import ru.javawebinar.topjava.repository.UserRepository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.function.Function;
 
 @Repository
 @Transactional(readOnly = true)
@@ -47,7 +46,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Override
     @Transactional
     public User save(User user) {
-        super.validate(user);
+        validate(user);
         BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(user);
         List<Object[]> params = new ArrayList<>();
         if (user.isNew()) {
@@ -57,9 +56,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 UPDATE users SET name=:name, email=:email, password=:password, registered=:registered, enabled=:enabled, 
                 calories_per_day=:caloriesPerDay WHERE id=:id""", parameterSource) == 0) {
             return null;
+        } else {
+            jdbcTemplate.update("DELETE FROM user_roles WHERE user_id=?", user.getId());
         }
         user.getRoles().forEach(role -> params.add(new Object[]{user.getId(), role.name()}));
-        jdbcTemplate.update("DELETE FROM user_roles WHERE user_id=?", user.getId());
         jdbcTemplate.batchUpdate("INSERT INTO user_roles VALUES (?, ?)", params);
         return user;
     }
@@ -76,15 +76,13 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     private <T> User getByParameter(String query, T parameter) {
         List<User> users = jdbcTemplate.query(query, (rs, row) -> getUser(rs), parameter);
-        if (users.size() == 1) {
-            User user = DataAccessUtils.objectResult(users, User.class);
+        User user = DataAccessUtils.singleResult(users);
+        if (user != null) {
             List<Role> userRoles = jdbcTemplate.query(GET_ROLES, (rs, rowNum) ->
                     Role.valueOf(rs.getString("role")), user.getId());
             user.setRoles(userRoles);
-            return user;
-        } else {
-            return null;
         }
+        return user;
     }
 
     @Override

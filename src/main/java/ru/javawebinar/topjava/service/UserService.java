@@ -42,6 +42,7 @@ public class UserService {
     }
 
     @Cacheable("users")
+    @CacheEvict(value = "users", allEntries = true)
     public List<User> getAll() {
         return repository.getAll();
     }
