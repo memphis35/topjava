@@ -1,55 +1,67 @@
 package ru.javawebinar.topjava.web.meal;
 
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.to.MealTo;
+import ru.javawebinar.topjava.util.CustomDateTime;
 
-import java.time.LocalDateTime;
+import java.net.URI;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
-@RequestMapping(MealRestController.REST_URL)
+@RequestMapping(value = MealRestController.REST_URL, produces = MediaType.APPLICATION_JSON_VALUE)
 public class MealRestController extends AbstractMealController {
-    public static final String REST_URL = "/rest_meals";
+    public static final String REST_URL = "/rest/meals";
 
-    @GetMapping(value = "/get/{mealId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Override
+    @GetMapping(value = "/{mealId}")
     public Meal get(@PathVariable int mealId) {
         return super.get(mealId);
     }
 
-    @DeleteMapping("/delete/{mealId}")
+    @Override
+    @DeleteMapping("/{mealId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable int mealId) {
         super.delete(mealId);
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Override
+    @GetMapping
     public List<MealTo> getAll() {
         return super.getAll();
     }
 
-    @PostMapping(value = "/create")
+    @PostMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Meal create(@RequestBody Meal meal) {
-        return super.create(meal);
+    public ResponseEntity<Meal> restCreate(@RequestBody Meal meal) {
+        Meal created = super.create(meal);
+        URI uriOfNewResource = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path(REST_URL + "/{id}")
+                .buildAndExpand(created.getId()).toUri();
+        return ResponseEntity.created(uriOfNewResource).body(created);
     }
 
-    @PutMapping(value = "/update/{mealId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Override
+    @PutMapping(value = "/{mealId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@RequestBody Meal meal, @PathVariable Integer mealId) {
+    public void update(@RequestBody Meal meal, @PathVariable int mealId) {
         super.update(meal, mealId);
     }
 
-    @GetMapping(value = "/filter/{startDateTime}/{endDateTime}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Override
+    @GetMapping(value = "/filter")
     public List<MealTo> getBetween(
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDateTime,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime) {
-        List<MealTo> result = super.getBetween(
-                startDateTime.toLocalDate(), startDateTime.toLocalTime(),
-                endDateTime.toLocalDate(), endDateTime.toLocalTime());
-        return result;
+            @RequestParam @CustomDateTime(maxValue = false, type = CustomDateTime.Type.DATE) LocalDate startDate,
+            @RequestParam @CustomDateTime(maxValue = false, type = CustomDateTime.Type.TIME) LocalTime startTime,
+            @RequestParam @CustomDateTime(maxValue = true, type = CustomDateTime.Type.DATE) LocalDate endDate,
+            @RequestParam @CustomDateTime(maxValue = true, type = CustomDateTime.Type.TIME) LocalTime endTime) {
+        return super.getBetween(startDate, startTime, endDate, endTime);
     }
 }

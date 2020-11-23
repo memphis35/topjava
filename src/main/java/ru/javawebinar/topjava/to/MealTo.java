@@ -23,10 +23,6 @@ public class MealTo {
         this.excess = excess;
     }
 
-    public MealTo(Meal meal, boolean excess) {
-        this(meal.getId(), meal.getDateTime(), meal.getDescription(), meal.getCalories(), excess);
-    }
-
     public MealTo() {
     }
 

@@ -44,7 +44,7 @@ class RootControllerTest extends AbstractControllerTest {
                 .andExpect(model().attribute("meals", new AssertionMatcher<List<MealTo>>() {
                     @Override
                     public void assertion(List<MealTo> actualMeals) throws AssertionError {
-                        List<MealTo> mealsTo = MealsUtil.getTos(meals, MealsUtil.DEFAULT_CALORIES_PER_DAY);
+                        List<MealTo> mealsTo = MealsUtil.getTos(meals, SecurityUtil.authUserCaloriesPerDay());
                         Assertions.assertThat(actualMeals).usingRecursiveComparison().isEqualTo(mealsTo);
                     }
                 }));
