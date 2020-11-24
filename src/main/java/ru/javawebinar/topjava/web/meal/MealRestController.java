@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.to.MealTo;
-import ru.javawebinar.topjava.util.CustomDateTime;
 
 import java.net.URI;
 import java.time.LocalDate;
@@ -38,9 +37,8 @@ public class MealRestController extends AbstractMealController {
         return super.getAll();
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Meal> restCreate(@RequestBody Meal meal) {
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Meal> createAndReturnUrl(@RequestBody Meal meal) {
         Meal created = super.create(meal);
         URI uriOfNewResource = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path(REST_URL + "/{id}")
@@ -58,10 +56,10 @@ public class MealRestController extends AbstractMealController {
     @Override
     @GetMapping(value = "/filter")
     public List<MealTo> getBetween(
-            @RequestParam @CustomDateTime(maxValue = false, type = CustomDateTime.Type.DATE) LocalDate startDate,
-            @RequestParam @CustomDateTime(maxValue = false, type = CustomDateTime.Type.TIME) LocalTime startTime,
-            @RequestParam @CustomDateTime(maxValue = true, type = CustomDateTime.Type.DATE) LocalDate endDate,
-            @RequestParam @CustomDateTime(maxValue = true, type = CustomDateTime.Type.TIME) LocalTime endTime) {
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalTime startTime,
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) LocalTime endTime) {
         return super.getBetween(startDate, startTime, endDate, endTime);
     }
 }

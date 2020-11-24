@@ -20,11 +20,10 @@ import static ru.javawebinar.topjava.MealTestData.*;
 import static ru.javawebinar.topjava.UserTestData.USER_ID;
 
 public class MealRestControllerTest extends AbstractControllerTest {
+    private static final String URL = MealRestController.REST_URL + "/";
 
     @Autowired
-    MealService mealService;
-
-    private static final String URL = MealRestController.REST_URL + "/";
+    private MealService mealService;
 
     @Test
     void create() throws Exception {
@@ -42,11 +41,11 @@ public class MealRestControllerTest extends AbstractControllerTest {
 
     @Test
     void get() throws Exception {
-        perform(MockMvcRequestBuilders.get(URL + MealTestData.MEAL1_ID));
-//                .andDo(print())
-//                .andExpect(MockMvcResultMatchers.status().isOk())
-//                //.andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
-//                //.andExpect(MEAL_MATCHER.contentJson(meal1));
+        perform(MockMvcRequestBuilders.get(URL + MealTestData.MEAL1_ID))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(MEAL_MATCHER.contentJson(meal1));
     }
 
     @Test
@@ -81,10 +80,25 @@ public class MealRestControllerTest extends AbstractControllerTest {
 
     @Test
     void getBetween() throws Exception {
-        perform(MockMvcRequestBuilders.get(URL + "filter" + FILTER_PERIOD))
+        perform(MockMvcRequestBuilders.get(URL + "filter")
+                .param("startDate", "2020-01-30")
+                .param("startTime", "09:15:30")
+                .param("endDate", "2020-01-31")
+                .param("endTime", "14:00:00"))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(MEALTO_MATCHER.contentJson(viewUserMealsFiltered));
+    }
+
+    @Test
+    void getBetweenWithNullParams() throws Exception {
+        perform(MockMvcRequestBuilders.get(URL + "filter")
+                .param("startDate", "2020-01-31")
+                .param("endTime", "14:00:00"))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(MEALTO_MATCHER.contentJson(viewUserMealsFilteredWithNullEndDate));
     }
 }
